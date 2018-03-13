@@ -7,8 +7,9 @@ import argparse
 import sys
 import os
 
-from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon
 
 
@@ -27,25 +28,9 @@ class Dino():
         self.mother = keyValue['mother']
         self.father = keyValue['father']
 
-class StatsTable(QTableWidget):
-
-    def __init__(self, r, c):
-        super().__init__(r, c)
-        self.initStatsTable()
-
-    def initStatsTable(self):
-        self.horizontalHeader().hide()
-        self.verticalHeader().hide()
-
-        self.statList = ['Tamed at Level','Sex','Health','Stamina','Oxygen','Food','Weight','Damage','Mother','Father']
-        
-        for x in range(len(self.statList)):
-            hitem = QTableWidgetItem(self.statList[x])
-            hitem.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.setItem(x,0,hitem)
-
-
 class AddWindow(QWidget):
+
+    closeTrigger = pyqtSignal()
     def __init__(self, dinotype):
         super().__init__()
         self.initAddWindow()
@@ -82,9 +67,9 @@ class AddWindow(QWidget):
         self.mainLayout.addLayout(self.paternityLayout)
         self.Tamed.toggled.connect(self.originCheck)
 
-        self.stats = StatsTable(10,2)
-        self.stats.removeRow(9)
-        self.stats.removeRow(8)
+        self.stats = QTableWidget(8,1)
+        self.stats.setVerticalHeaderLabels(['Tamed at Level','Sex','Health','Stamina','Oxygen','Food','Weight','Damage'])
+        self.stats.horizontalHeader().hide()
         self.statsLayout = QHBoxLayout()
         self.maleButtLayout = QVBoxLayout()
         self.femaleButtLayout = QVBoxLayout()
@@ -131,6 +116,7 @@ class AddWindow(QWidget):
             "mother": "wild",\
             "father": "wild"})
         dinoMasterManifesto.append(dino)
+        self.closeTrigger.emit()
         self.close()
 
     def originCheck(self, Qitem):
@@ -141,9 +127,6 @@ class AddWindow(QWidget):
         elif (self.Bred.isChecked()):
             self.motherDrop.setEnabled(True)
             self.fatherDrop.setEnabled(True)
-
-        
-
 
 class DinoSelect(QComboBox):
 
@@ -157,15 +140,6 @@ class DinoSelect(QComboBox):
             self.dinolist = fp.readlines()
         for dino in self.dinolist:
             self.addItem(dino.strip())
-        
-class Dinos(QComboBox):
-
-    def __init__(self):
-        super().__init__()
-        self.initDinos()
-
-    def initDinos(self):
-        pass
 
 class ArkBreedingTracker(QWidget):
 
@@ -180,20 +154,35 @@ class ArkBreedingTracker(QWidget):
         except Exception as e:
             print(f'Unable to load: Dinomanifesto.json\r\n{e}')
             dinoMasterManifesto = []
-
-        self.ActiveDinos = None
+        self.parentList = []
+        self.ActiveDinos = []
         self.mainLayout = QVBoxLayout()
-        self.setGeometry(100,100,450,780)
+        self.setGeometry(100,100,1280,720)
         self.setWindowTitle('ArkBreedingTracker')
         self.setWindowIcon(QIcon('web.png'))
         self.setLayout(self.mainLayout)
-        self.table = StatsTable(10,2)
         self.combo1 = DinoSelect()
         self.mainLayout.addWidget(self.combo1)
-        self.combo2 = Dinos()
-        self.mainLayout.addWidget(self.combo2)
+        self.squareLayout = QHBoxLayout()
+        self.DinoTable = QTableWidget(0,11)
+        self.DinoTable.setHorizontalHeaderLabels(['Name', 'Tamed at Level','Sex','Health','Stamina','Oxygen','Food','Weight','Damage','Mother','Father'])
+        self.UpdateStats(self.combo1)
+        self.dinoTreeLayout = QGridLayout()
+        self.dinoTreeLayout.addWidget(QLabel("Dino1"),1,1)
+        self.squareLayout.addLayout(self.dinoTreeLayout)
+        self.squareLayout.addWidget(self.DinoTable)
+        
+        # for x in range(len(self.statList)):
+        #     hitem = QTableWidgetItem(self.statList[x])
+        #     hitem.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        #     self.setItem(x,0,hitem)
 
-        self.mainLayout.addWidget(self.table)
+        #self.table = StatsTable(10,2)
+        #self.combo2 = Dinos()
+        #self.mainLayout.addWidget(self.combo2)
+
+
+        self.mainLayout.addLayout(self.squareLayout)
 
         self.AddButton = QPushButton("Add")
         self.DeleteButton = QPushButton("Delete")
@@ -205,8 +194,8 @@ class ArkBreedingTracker(QWidget):
         self.mainLayout.addLayout(self.buttLayout)
 
 
-        self.combo1.currentTextChanged.connect(self.UpdateDinoNames)
-        self.combo2.currentTextChanged.connect(self.UpdateStats)
+        self.combo1.currentTextChanged.connect(self.UpdateStats)
+        #self.combo2.currentTextChanged.connect(self.UpdateStats)
         self.AddButton.clicked.connect(self.addDino)
         #self.table.itemChanged.connect(self.checkNumeric)
 
@@ -220,26 +209,23 @@ class ArkBreedingTracker(QWidget):
 
     def addDino(self, Qitem):
         self.addWindow = AddWindow(self.combo1.currentText())
+        self.addWindow.closeTrigger.connect(self.UpdateStats)
         self.addWindow.show()
 
-
-    def UpdateStats(self,Qitem):
+    def UpdateStats(self,Qitem=None):
         global dinoMasterManifesto
-        dinoStats = list(filter(lambda x: x.type == self.combo1.currentText() and x.name == self.combo2.currentText(), dinoMasterManifesto))
-        for x in range(6):
-            hitem = QTableWidgetItem(str(dinoStats[0].stats[x]))
-            self.table.setItem(x+2,1,hitem)
-        dino = list(filter(lambda x: x.type == self.combo1.currentText() and x.name == self.combo2.currentText(), dinoMasterManifesto))
-        dinoStats = QTableWidgetItem(str(dino[0].sex))
-        self.table.setItem(1,1,dinoStats)
-
-        dinoStats = QTableWidgetItem(str(dino[0].level))
-        self.table.setItem(0,1,dinoStats)
-
-        dinoStats = QTableWidgetItem(str(dino[0].mother))
-        self.table.setItem(8,1,dinoStats)
-        dinoStats = QTableWidgetItem(str(dino[0].father))
-        self.table.setItem(9,1,dinoStats)
+        self.DinoTable.clearContents()
+        self.DinoTable.setRowCount(0)
+        dinoList = list(filter(lambda x: x.type == self.combo1.currentText(), dinoMasterManifesto))
+        for dino in dinoList:
+            self.DinoTable.insertRow(self.DinoTable.rowCount())
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,0,QTableWidgetItem(str(dino.name)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,1,QTableWidgetItem(str(dino.level)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,2,QTableWidgetItem(dino.sex))
+            for x in range(len(dino.stats)):
+                self.DinoTable.setItem(self.DinoTable.rowCount()-1,x+3,QTableWidgetItem(str(dino.stats[x])))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,9,QTableWidgetItem(dino.mother))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,10,QTableWidgetItem(dino.father))
         
     def checkNumeric(self,Qitem):
         try:
@@ -247,16 +233,11 @@ class ArkBreedingTracker(QWidget):
     
         except ValueError:
                 Qitem.setText("")
-    
-    def UpdateDinoNames(self,Qitem):
-        self.combo2.clear()
-        self.ActiveDinos = list(filter(lambda x: x.type == Qitem, dinoMasterManifesto))
-        for dino in self.ActiveDinos:
-            self.combo2.addItem(dino.name)
 
     def closeEvent(self, event):
         try:
             self.saveData()
+
             event.accept()
         except Exception as e:
             print("Could not save the manifesto")
@@ -269,9 +250,16 @@ class ArkBreedingTracker(QWidget):
             lines.append(json.dumps(dino, default=lambda o: o.__dict__))
         combined = ','.join(lines)
         with open(os.getcwd()+'\dinomanifesto.json', 'w') as file:
-            file.write(f'[{combined}]')
+            file.write(f'[{combined}]')    
 
-    
+    def maxDinoAlgo(self):
+        global dinoMasterManifesto
+        dinoList = list(filter(lambda x: x.type == self.combo1.currentText(), dinoMasterManifesto))
+        
+
+
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -279,4 +267,3 @@ if __name__ == '__main__':
     abt = ArkBreedingTracker()
 
     sys.exit(app.exec_())
-

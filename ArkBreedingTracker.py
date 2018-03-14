@@ -23,7 +23,12 @@ class Dino():
         self.name = keyValue['name']
         self.level = keyValue['level']
         self.type = keyValue['type']
-        self.stats = keyValue['stats']
+        self.health = keyValue['health']
+        self.stamina = keyValue['stamina']
+        self.oxygen = keyValue['oxygen']
+        self.food = keyValue['food']
+        self.weight = keyValue['weight'] 
+        self.damage = keyValue['damage']
         self.sex = keyValue['sex']
         self.mother = keyValue['mother']
         self.father = keyValue['father']
@@ -105,14 +110,14 @@ class AddWindow(QWidget):
     def addDino(self,Qitem):
         dino = Dino({"name":self.nameText.text(),\
             "type": self.dinotype,\
-            "level":float(self.stats.item(0,1).text()),\
-            "stats": [float(self.stats.item(2,1).text()),\
-                        float(self.stats.item(3,1).text()),\
-                        float(self.stats.item(4,1).text()),\
-                        float(self.stats.item(5,1).text()),\
-                        float(self.stats.item(6,1).text()),\
-                        float(self.stats.item(7,1).text())],\
-            "sex":self.stats.item(1,1).text(),\
+            "level":float(self.stats.item(0,0).text()),\
+            "health": float(self.stats.item(2,0).text()),\
+            "stamina":float(self.stats.item(3,0).text()),\
+            "oxygen":float(self.stats.item(4,0).text()),\
+            "food":float(self.stats.item(5,0).text()),\
+            "weight":float(self.stats.item(6,0).text()),\
+            "damage":float(self.stats.item(7,0).text()),\
+            "sex":self.stats.item(1,0).text(),\
             "mother": "wild",\
             "father": "wild"})
         dinoMasterManifesto.append(dino)
@@ -197,6 +202,7 @@ class ArkBreedingTracker(QWidget):
         self.combo1.currentTextChanged.connect(self.UpdateStats)
         #self.combo2.currentTextChanged.connect(self.UpdateStats)
         self.AddButton.clicked.connect(self.addDino)
+        self.DeleteButton.clicked.connect(self.maxDinoAlgo)
         #self.table.itemChanged.connect(self.checkNumeric)
 
         self.show()
@@ -222,8 +228,12 @@ class ArkBreedingTracker(QWidget):
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,0,QTableWidgetItem(str(dino.name)))
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,1,QTableWidgetItem(str(dino.level)))
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,2,QTableWidgetItem(dino.sex))
-            for x in range(len(dino.stats)):
-                self.DinoTable.setItem(self.DinoTable.rowCount()-1,x+3,QTableWidgetItem(str(dino.stats[x])))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,3,QTableWidgetItem(str(dino.health)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,4,QTableWidgetItem(str(dino.health)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,5,QTableWidgetItem(str(dino.health)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,6,QTableWidgetItem(str(dino.health)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,7,QTableWidgetItem(str(dino.health)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,8,QTableWidgetItem(str(dino.health)))
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,9,QTableWidgetItem(dino.mother))
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,10,QTableWidgetItem(dino.father))
         
@@ -255,6 +265,9 @@ class ArkBreedingTracker(QWidget):
     def maxDinoAlgo(self):
         global dinoMasterManifesto
         dinoList = list(filter(lambda x: x.type == self.combo1.currentText(), dinoMasterManifesto))
+        for dino in dinoList
+
+        print(seq)
         
 
 

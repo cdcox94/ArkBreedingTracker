@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #!/usr/bin/python3
 
 import socket
@@ -6,6 +5,9 @@ import json
 import argparse
 import sys
 import os
+import numpy as np
+from operator import attrgetter
+
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
@@ -146,6 +148,28 @@ class DinoSelect(QComboBox):
         for dino in self.dinolist:
             self.addItem(dino.strip())
 
+class BreedingSquare(QWidget):
+	def __init__(self, dino):
+		super().__init__()
+
+		self.dino = dino
+		self.layout = QGridLayout();
+		self.NameLabel = QLabel("Name: " + self.dino.name)
+		self.HealthLabel = QLabel("Health: "+ str(self.dino.health))
+		self.StaminaLabel = QLabel("Stamina: " + str(self.dino.stamina))
+		self.OxygenLabel = QLabel("Oxygen: " + str(self.dino.oxygen))
+		self.FoodLabel = QLabel("Food: "+ str(self.dino.food))
+		self.WeightLabel = QLabel("Weight: " + str(self.dino.weight))
+		self.DamageLabel = QLabel("Damage: " + str(self.dino.damage))
+		self.layout.addWidget(self.NameLabel, 0, 0)
+		self.layout.addWidget(self.HealthLabel,1,0);
+		self.layout.addWidget(self.StaminaLabel,2,0);
+		self.layout.addWidget(self.OxygenLabel,3,0);
+		self.layout.addWidget(self.FoodLabel,4,0);
+		self.layout.addWidget(self.WeightLabel,5,0);
+		self.layout.addWidget(self.DamageLabel,6,0);
+		self.setLayout(self.layout)
+
 class ArkBreedingTracker(QWidget):
 
     def __init__(self):
@@ -173,7 +197,6 @@ class ArkBreedingTracker(QWidget):
         self.DinoTable.setHorizontalHeaderLabels(['Name', 'Tamed at Level','Sex','Health','Stamina','Oxygen','Food','Weight','Damage','Mother','Father'])
         self.UpdateStats(self.combo1)
         self.dinoTreeLayout = QGridLayout()
-        self.dinoTreeLayout.addWidget(QLabel("Dino1"),1,1)
         self.squareLayout.addLayout(self.dinoTreeLayout)
         self.squareLayout.addWidget(self.DinoTable)
         
@@ -229,11 +252,11 @@ class ArkBreedingTracker(QWidget):
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,1,QTableWidgetItem(str(dino.level)))
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,2,QTableWidgetItem(dino.sex))
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,3,QTableWidgetItem(str(dino.health)))
-            self.DinoTable.setItem(self.DinoTable.rowCount()-1,4,QTableWidgetItem(str(dino.health)))
-            self.DinoTable.setItem(self.DinoTable.rowCount()-1,5,QTableWidgetItem(str(dino.health)))
-            self.DinoTable.setItem(self.DinoTable.rowCount()-1,6,QTableWidgetItem(str(dino.health)))
-            self.DinoTable.setItem(self.DinoTable.rowCount()-1,7,QTableWidgetItem(str(dino.health)))
-            self.DinoTable.setItem(self.DinoTable.rowCount()-1,8,QTableWidgetItem(str(dino.health)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,4,QTableWidgetItem(str(dino.stamina)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,5,QTableWidgetItem(str(dino.oxygen)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,6,QTableWidgetItem(str(dino.food)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,7,QTableWidgetItem(str(dino.weight)))
+            self.DinoTable.setItem(self.DinoTable.rowCount()-1,8,QTableWidgetItem(str(dino.damage)))
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,9,QTableWidgetItem(dino.mother))
             self.DinoTable.setItem(self.DinoTable.rowCount()-1,10,QTableWidgetItem(dino.father))
         
@@ -264,15 +287,22 @@ class ArkBreedingTracker(QWidget):
 
     def maxDinoAlgo(self):
         global dinoMasterManifesto
-        dinoList = list(filter(lambda x: x.type == self.combo1.currentText(), dinoMasterManifesto))
-        for dino in dinoList
+        dinoList = list(filter(lambda x: x.type == self.combo1.currentText() , dinoMasterManifesto))
+        statList = ['health','stamina','oxygen','food','weight','damage']
 
-        print(seq)
+        maxStatsList = []
+        for stat in statList:
+        	maxStatsList.append(max(dinoList, key=attrgetter(stat)))
         
+        maxStatsSet = set(maxStatsList)
 
+        i = 0
+        for dino in maxStatsSet:
+        	self.dinoTreeLayout.addWidget(BreedingSquare(dino),i,0)
+        	i+=1
 
-
-
+        maleMaxStat = list(filter(lambda x: x.sex == 'Male', maxStatsSet))
+        femaleMaxStat = list(filter(lambda x: x.sex == 'Female', maxStatsSet))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -280,3 +310,5 @@ if __name__ == '__main__':
     abt = ArkBreedingTracker()
 
     sys.exit(app.exec_())
+
+
